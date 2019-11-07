@@ -1,3 +1,5 @@
+
+
 def parseTestCase(path):
     """
     Utility function to help parse test cases.
@@ -22,3 +24,17 @@ def parseTestCase(path):
         line = f.readline()
 
     return dict(initialPieces=initialBoardState, upperCaptures=upperCaptures, lowerCaptures=lowerCaptures, moves=moves)
+
+# just converts a column number to a column character
+def convertColNumToChar(colNum: int) -> str:
+    return chr(ord('a') + colNum - 1)
+
+# does the opposite as convertColNumToChar except with reverse mapping
+def convertColCharToNum(colChar: str) -> int:
+    return ord(colChar) - ord('a') + 1
+
+# given x and y, returns if off coordinate
+def oob(x: int, y: int, boardSize: int )-> bool:
+    return not (1<=x<=boardSize and 1<y<=boardSize)
+
+
