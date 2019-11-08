@@ -20,17 +20,22 @@ class Board:
         for piece, dx, dy in Board.INITIAL_ARRANGEMENT:
             self._board[dx][Board.BOARD_SIZE-1-dy].addPiece(piece, PlayerEnum.UPPER)
             self._board[Board.BOARD_SIZE-dx-1][dy].addPiece(piece, PlayerEnum.LOWER)
-            
+
+    # initializes an empty board        
     def _initEmptyBoard(self):
         #creates a bunch of squares and saves it in a list
         return [[Square(x,y) for y in range(1, self.BOARD_SIZE+1)] for x in range(1, self.BOARD_SIZE+1)]
+    
+    def _getBoard(self, x: int, y: int)->Square:
+        return self._board[x-1][y-1]
 
+        
     def __repr__(self):
         return self._stringifyBoard()
 
     def _stringifyBoard(self):
         """
-        Utility function for printing the board
+        Utility function for printing the boards
         """
         s = ''
         for row in range(len(self._board) - 1, -1, -1):
@@ -59,5 +64,3 @@ class Board:
             return ' ' + sq + '|'
         if len(sq) == 2:
             return sq + '|'
-
-print(Board())
