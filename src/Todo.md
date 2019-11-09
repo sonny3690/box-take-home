@@ -1,10 +1,9 @@
-TODO:
+## TODO:
 
-1. Tie Mechanism
-    a. seems easy enough
+1. Winning mechansim * done *
 2. Capture & Drop Mechanism
-    a. seems okay
-    b. will need 
+    a. Two things are interlinked.
+    b. Should do capture before drop
 3. Check Mechanism
 4. Promotions
     a. essentially the same thing, except move changes

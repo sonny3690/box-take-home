@@ -23,3 +23,8 @@ class GameState(Enum):
 class MoveType(Enum):
     MOVE = 'move'
     DROP = 'drop'
+    
+class EndGameType(Enum):
+    INVALID_MOVE = 'Illegal move.'
+    CHECKMATE = 'Checkmate.'
+    

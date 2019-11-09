@@ -73,16 +73,18 @@ class Piece:
         self._promoted = False
     
     #drops the piece
-    def dropPiece(self):
+    def dropPiece(self, playerType):
         assert(self._dropped == False)
         self._dropped = True
+        
+        self._playerType = playerType 
     
     def movePiece(self, x: int, y: int):
         self._x = x
         self._y = y
 
     def __repr__(self):
-        return self._name if self._name else ""
+        return self._name.strip() if self._name else ""
 
     def __str__(self):
         return self.__repr__()

@@ -29,7 +29,6 @@ class Board:
     def _getBoard(self, x: int, y: int)->Square:
         return self._board[x-1][y-1]
 
-        
     def __repr__(self):
         return self._stringifyBoard()
 

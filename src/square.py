@@ -1,6 +1,7 @@
 from utils import convertColNumToChar
 from piece import Piece
 
+
 class Square:
     
     def __init__(self, x, y):
@@ -35,10 +36,19 @@ class Square:
 
         if drop:
             self._piece.unpromote_piece()
-            self._piece.dropPiece()
-            player.addDroppedPiece(self._piece)
+            self._piece.dropPiece(player._playerType)
+            player.addCapture(self._piece)
 
         self._piece = None
+
+
+    #returns if in promotion zone
+    def inPromotionZone(self):
+        if not self.hasPiece():
+            return False
+        
+        return (self._y == 1 and piece._isUpper) or (self._y == 5 and not piece._isUpper)
+
     
     @property
     def name (self):
