@@ -27,9 +27,9 @@ class Game:
         while self._num_turns <= 200 and self._gameState == GameState.PLAYING:
             print(self._board)
             
-            commands = ['move e1 e4', 'move e5 e4', 'drop p c4']
+            commands = ['move e1 e4', 'move e5 e4', 'drop p c4', 'move e4 e3', 'move c4 c5']
 
-            if self._num_turns >= len(commands) - 1:
+            if self._num_turns >= len(commands):
                 playerInput = input(f"{ self._currentPlayer._playerType.value}> ")
             else:
                 playerInput = commands[self._num_turns]
@@ -67,9 +67,8 @@ class Game:
         '''
         if (not fr.hasPiece()) or (to._coord not in validMoves) or (fr._piece._playerType != self._currentPlayer._playerType):
             # small problem here; we're trying to move into each other
-
-            print((not fr.hasPiece()),(to._coord not in validMoves) ,(fr._piece._playerType != self._currentPlayer))
-            exit(1)
+            self.endGame(EndGameType.INVALID_MOVE)
+        
 
         # we first remove our piece from our original destination
         fr.removePiece()
@@ -79,7 +78,26 @@ class Game:
 
         to.placePiece(frPiece)
 
-        print(f"{self._currentPlayer} player action: move {fr.name} {to.name}")
+        # print(f"{self._currentPlayer} player action: move {fr.name} {to.name}")
+
+        '''
+        Covers the following cases
+        1) When a pawn reaches its promotion zone
+        2) When user flags for a promotion
+        '''
+        if (frPiece._pieceType == PieceEnum.p and to.inPromotionZone()) or promote:
+            
+            '''
+            Means that the game will end for the follopwing cases
+            1) outside the promotion zone
+            2) box drive or a shield is asked to be promoted
+            '''
+            if not (fr.inPromotionZone(self._currentPlayer) or to.inPromotionZone()) or (frPiece._pieceType == PieceEnum.d or frPiece._pieceType == PieceEnum.s):
+                self.endGame(EndGameType.INVALID_MOVE)
+        
+            frPiece.promotePiece()
+                        
+
         
     def processDrop(self, pieceName: str, square):
 
@@ -88,9 +106,31 @@ class Game:
             self.endGame(EndGameType.INVALID_MOVE)
         
         dropPiece = self._currentPlayer.dropCapture(pieceName)
-        
-        if not dropPiece:
-            print(dropPiece)
+
+        pDrop = True
+
+        if pieceName == PieceEnum.p.value:
+
+            x = square._x -1
+            
+            for y in range(Board.BOARD_SIZE):
+                cSquare = self._boardSquares[x][y]
+                
+                '''
+                Checks for Three Things
+                1. If Square has a piece
+                2. If square contains piece of p Type
+                3. If square shares same player type
+                '''
+
+                if cSquare.hasPiece() and cSquare._piece._pieceType == PieceEnum.p and cSquare._playerType == self._currentPlayer._playerType:
+                    pDrop = False
+
+            # case in which p is dropped into promotion zone
+            if square.inPromotionZone(self._currentPlayer):
+                pDrop = False
+
+        if not dropPiece or not pDrop:
             self.endGame(EndGameType.INVALID_MOVE)
 
         square.placePiece(dropPiece)
@@ -121,7 +161,7 @@ class Game:
             if not frSquare.hasPiece():
                 self.endGame(EndGameType.INVALID_MOVE)               
 
-            self.processMove(frSquare, toSquare)
+            self.processMove(frSquare, toSquare, promoted)
 
         elif inputSplit[0] == MoveType.DROP.value:
 

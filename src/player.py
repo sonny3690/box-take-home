@@ -21,9 +21,7 @@ class Player:
         print (f"Captures {self._playerType.value}: {captureString}")
 
 
-    def dropCapture(self, pieceName: str):
-        print('SHOULDNT INOVEKE')
-    
+    def dropCapture(self, pieceName: str):    
         # go through all the captures
         for i, c in enumerate(self._captures):
 
@@ -34,11 +32,3 @@ class Player:
 
     def __str__(self):
         return self._playerType.value
-
-
-    
-        
-    
-
-    
-        

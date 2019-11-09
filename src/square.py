@@ -43,11 +43,14 @@ class Square:
 
 
     #returns if in promotion zone
-    def inPromotionZone(self):
-        if not self.hasPiece():
-            return False
-        
-        return (self._y == 1 and piece._isUpper) or (self._y == 5 and not piece._isUpper)
+    def inPromotionZone(self, player=None):
+    
+        # caveat here, if player is not specified, square must have a piece
+        assert(self._piece if not player else True)
+
+        isUpper = player._isUpper() if player else self._piece._isUpper
+
+        return (self._y == 1 and isUpper) or (self._y == 5 and not isUpper)
 
     
     @property
