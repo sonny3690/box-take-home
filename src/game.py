@@ -124,31 +124,37 @@ class Game:
 
             # print((not fr.hasPiece()), (to._coord not in validMoves), (fr._piece._playerType != self._currentPlayer._playerType))
             self.endGame(EndGameType.INVALID_MOVE)
-        
 
-        # we first remove our piece from our original destination
-        fr.removePiece()
-
-        if to.hasPiece():
-            to.removePiece(captured=True, player=self._currentPlayer)
-
-        to.placePiece(frPiece)
         '''
         Covers the following cases
         1) When a pawn reaches its promotion zone
         2) When user flags for a promotion
         '''
-        if (frPiece._pieceType == PieceEnum.p and to.inPromotionZone()) or promote:
+        if (frPiece._pieceType == PieceEnum.p and to.inPromotionZone(self._currentPlayer)) or promote:
             
             '''
             Means that the game will end for the follopwing cases
             1) outside the promotion zone
             2) box drive or a shield is asked to be promoted
             '''
-            if not (fr.inPromotionZone(self._currentPlayer) or to.inPromotionZone()) or (frPiece._pieceType == PieceEnum.d or frPiece._pieceType == PieceEnum.s):
+
+            promote = True
+
+            if not (fr.inPromotionZone(self._currentPlayer) or to.inPromotionZone(self._currentPlayer)) or (frPiece._pieceType == PieceEnum.d or frPiece._pieceType == PieceEnum.s):
                 self.endGame(EndGameType.INVALID_MOVE)
         
+
+        # we first remove our piece from our original destination then place it
+        fr.removePiece()
+
+        if to.hasPiece():
+            to.removePiece(captured=True, player=self._currentPlayer)
+
+        to.placePiece(frPiece)
+
+        if promote:
             frPiece.promotePiece()
+        
                         
     def processDrop(self, pieceName: str, square):
         # ensure that drop zone is empty
