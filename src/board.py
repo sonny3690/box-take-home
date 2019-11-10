@@ -14,15 +14,15 @@ class Board:
 
     def __init__(self):
         self._board = self._initEmptyBoard()
-        
+        self._pieces = []
 
     #adds some pieces, takes None, returns None
     def addInitialPieces(self, initialPositions=None) -> None:
 
         if not initialPositions:
             for piece, dx, dy in Board.INITIAL_ARRANGEMENT:
-                self._board[dx][Board.BOARD_SIZE-1-dy].addPiece(piece, PlayerEnum.UPPER)
-                self._board[Board.BOARD_SIZE-dx-1][dy].addPiece(piece, PlayerEnum.LOWER)
+                self._pieces.append(self._board[dx][Board.BOARD_SIZE-1-dy].addPiece(piece, PlayerEnum.UPPER))
+                self._pieces.append(self._board[Board.BOARD_SIZE-dx-1][dy].addPiece(piece, PlayerEnum.LOWER))
         else:
             # here, the initial arrangements have been set by file
             for pieceInfo in initialPositions:
@@ -36,7 +36,59 @@ class Board:
                 player = PlayerEnum.UPPER if pieceVal[-1].isupper() else PlayerEnum.LOWER
                 
                 #subtract by one to account for 0 indexing
-                self._board[x-1][y-1].addPiece(piece, player, promoted=promoted)
+                self._pieces.append(self._board[x-1][y-1].addPiece(piece, player, promoted=promoted))
+
+    # finds the location of the drive piece as a tuple
+    def _driveLocation(self, playerType)->tuple:
+        for p in self._playerPieces(playerType):
+            if p._pieceType == PieceEnum.d:
+                return p._coord, p
+
+        print('Error in Finding drive location', self._pieces)
+        exit(1)
+
+    # given two coordinates, returns the path that the checker is checking on
+    def _inBetweenPath(self, coordA, coordB):
+
+        pathList = []
+
+        # vertical path
+
+        if coordA[0] != coordB[0] and coordA[1] != coordB[1]:
+            uVector = [1,1]
+        elif coordA[1] != coordB[1]:
+            uVector = [0,1]
+        elif coordA[0] != coordB[0]:
+            uVector = [1,0]
+
+        startCoord, endCoord = (coordA, coordB) if coordA[0] + coordA[1] < coordB[0] + coordB[1] else (coordB, coordA)
+
+        # uses the delta vector to print some paths
+        for delta in range(1, max(endCoord[0] - startCoord[0], endCoord[1] - startCoord[1])):
+            dVector = [uVector[0] * delta, uVector[1] * delta]
+            pathList.append((dVector[0] + startCoord[0], dVector[1] + startCoord[1]))
+        
+        return pathList
+
+    # returns if piece can reach a certain coordinate
+    def _pieceCanReach(self, piece, coord, ignoreSide=False):
+        for c in piece.getValidMoves(self._board, ignoreSide):
+
+            if c[0] == coord[0] and c[1] == coord[1]:
+                return True
+        return False
+
+    # given a playerType, returns all relevant pieces in a list
+    def _playerPieces(self, playerType):
+        return list(filter(lambda x: x._playerType == playerType and not x._captured, self._pieces))
+
+    def _reachablePieces(self, playerType, coord, ignoreSide=False):
+        pieces = []
+        for p in self._playerPieces(playerType):
+            if self._pieceCanReach(p, coord, ignoreSide):
+                pieces.append(p)
+
+        return pieces
 
     # initializes an empty board        
     def _initEmptyBoard(self):

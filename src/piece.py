@@ -8,13 +8,13 @@ class Piece:
     Class that represents a BoxShogi piece
     """
 
-    # Regular moves
+    # Regular moves in 
     MOVE = {
-        PieceEnum.d : [(1,-1), (1,0), (1,1), (0,-1), (0,1), (-1,-1), (-1,0), (-1,1)],
+        PieceEnum.d : [(1,-1), (1,1), (-1,-1), (-1,1), (1,0), (0,-1), (0,1), (-1,0)],
         PieceEnum.n : [(x,0) for x in range(1, 5)] + [(0,x) for x in range(1, 5)] + [(-x,0) for x in range(1, 5)] + [(0,-x) for x in range(1, 5)],
         PieceEnum.g : [(x,x) for x in range(1, 5)] + [(-x,-x) for x in range(1, 5)] + [(-x,x) for x in range(1, 5)] + [(x,-x) for x in range(1, 5)],
-        PieceEnum.s : [(1,-1), (1,0), (0,-1), (0,1), (-1,-1), (-1,0)],
-        PieceEnum.r : [(1,1), (0,1), (-1,1), (-1,-1), (1,-1)],
+        PieceEnum.s : [(1,1), (-1,1), (1,0), (0,1), (0,-1), (-1,0)],
+        PieceEnum.r : [(1,1), (-1,1), (-1,-1), (1,-1), (0,1)],
         PieceEnum.p : [(0, 1)]
     }
 
@@ -33,31 +33,55 @@ class Piece:
         self._playerType = playerType
         self._x = x
         self._y = y
+        self._captured = False
 
     @property
     def _promotionZone(self):
         return (self._y == 1 and self._playerType == PlayerEnum.LOWER) or (self._y == Board.BOARD_SIZE and self._playerType == PlayerEnum.UPPER)
+
+    @property
+    def _coord(self):
+        return (self._x, self._y)
         
-    def getValidMoves(self, squares):
+    def getValidMoves(self, squares, ignoreSide=False):
 
         valid_moves = []
+        currentMoves = self._moves if self._playerType == PlayerEnum.LOWER else list(map(lambda x: (x[0], x[1] * -1), self._moves))
 
-        for dx, dy in self._moves:
+        # used to protect against jumpings
+        directionalMagnitude = 10
+
+        for dx, dy in currentMoves:
             nextX = self._x + dx
             nextY = self._y + dy
 
-            if oob(nextX, nextY):
+            # if self._pieceType == PieceEnum.s:
+            #     print('parsed', (nextX, nextY), abs(dx) + abs(dy))
+
+            if oob(nextX, nextY) or abs(dx) + abs(dy) > directionalMagnitude:
+                # if self._pieceType == PieceEnum.s:
+                    # print((nextX, nextY), abs(dx) + abs(dy))
                 continue
+
+            else:
+                directionalMagnitude = 10
             
+                # if self._pieceType == PieceEnum.s:
+                #     print((nextX, nextY))
+
             # subtract one because our squares are 0 indexed
             relevantSquare = squares[nextX-1][nextY-1]
             
-            # case in which our side lies on the board
-            if relevantSquare.hasPiece() and relevantSquare._piece._playerType == self._playerType:
-                continue
+            if relevantSquare.hasPiece() and relevantSquare._piece._pieceType != PieceEnum.d:
+                directionalMagnitude = abs(dx) + abs(dy) 
+                
+                if relevantSquare._piece._playerType == self._playerType and not ignoreSide:
+                    continue
 
             # we passed these checks, so we move on 
             valid_moves.append((nextX, nextY))
+
+        # print(self._pieceType, valid_moves)
 
         return valid_moves
 
@@ -84,10 +108,9 @@ class Piece:
         self._moves = Piece.MOVE[self._pieceType]
     
     #drops the piece
-    def dropPiece(self, playerType):
-
-        
-        self._playerType = playerType 
+    def capturePiece(self, playerType):
+        self._playerType = playerType
+        self._captured = True 
     
     def movePiece(self, x: int, y: int):
         self._x = x

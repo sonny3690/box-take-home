@@ -13,12 +13,10 @@ class Player:
     def addCapture(self, piece):
         self._captures.append(piece)
 
-
     # prints all the captures
     def printCaptures(self):
         captureString = ' '.join(list(map(str, self._captures)))
-        print (f"Captures {self._playerType.value}: {captureString}")
-
+        return f"Captures {self._playerType.value}: {captureString}"
 
     def dropCapture(self, pieceName: str):    
         # go through all the captures
@@ -27,7 +25,7 @@ class Player:
             if str(c).lower() == pieceName:
                 # returns the piece object to drop
                 return self._captures.pop(i)
-        return None       
+        return None      
 
     def __str__(self):
         return self._playerType.value

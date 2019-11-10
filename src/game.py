@@ -13,6 +13,8 @@ class Game:
         self._players = [Player(PlayerEnum.LOWER), Player(PlayerEnum.UPPER)]
         self._board = Board()
 
+        self._lastLog = []
+
     @property
     def _boardSquares(self):
         return self._board._board
@@ -43,46 +45,64 @@ class Game:
         
         fileMode = fileInfo != None
 
-        # print(fileInfo)
+        if not fileMode:
+            print(self._board)
+            print('Captures UPPER:')
+            print('Captures lower:\n')
+            
         
         while self._num_turns < 200 and self._gameState == GameState.PLAYING:
-
             '''
             Says should print certain information about the game state
 
             '''
-            shouldPrint = not fileMode or (self._num_turns == len(fileInfo['moves'])-1)
             commands = fileInfo['moves'] if fileMode else []
-
+        
             if self._num_turns >= len(commands):
-                playerInput = input(f"{ self._currentPlayer._playerType.value}> ")
+
+                prompt = f"{self._currentPlayer._playerType.value}> "
+
+                if fileMode:
+                    print('\n'.join(self._lastLog))
+                    print(prompt)
+                    exit(0)
+                else: 
+                    playerInput = input(prompt)
             else:
                 playerInput = commands[self._num_turns]
 
-            if shouldPrint:
-                print(f"{self._currentPlayer} action: {playerInput}")
-                print(self._board)
+            self._lastLog = []
 
+            # append the last log
+            self._lastLog.append(f"{self._currentPlayer} player action: {playerInput}")
 
             #parses the input
             self.parseInput(playerInput)
-
-            #prints the captures -> Upper then Lower
-            if shouldPrint:
-                self._players[1].printCaptures()
-                self._players[0].printCaptures()
-                print()
-        
+            
             # Do some stuff here
             self._num_turns += 1
-            
 
+            if not fileMode:
+                print('\n'.join(self._lastLog))
+         
+
+        if fileMode:
+            print('\n'.join(self._lastLog)) 
         print('Tie game. Too many moves.')
     
     # Ends the game and exits the REPL
     def endGame(self, endGameType):
-        
-        print(f"{str(self._otherPlayer)} wins. {endGameType.value}")
+
+        if endGameType != EndGameType.CHECKMATE:
+            self._lastLog.append(str(self._board))
+            self._lastLog.append(self._players[1].printCaptures())
+            self._lastLog.append(self._players[0].printCaptures())
+            self._lastLog.append('\n')
+
+        winner = str(self._otherPlayer) if endGameType == EndGameType.INVALID_MOVE else str(self._currentPlayer)
+
+        print('\n'.join(self._lastLog)) 
+        print(f"{str(winner)} player wins.  {endGameType.value}")
         exit(0)
         
     # processes a move based on squares
@@ -99,6 +119,10 @@ class Game:
         '''
         if (not fr.hasPiece()) or (to._coord not in validMoves) or (fr._piece._playerType != self._currentPlayer._playerType):
             # small problem here; we're trying to move into each other
+
+            # print(fr._piece, list(map(coordToString, validMoves)))
+
+            # print((not fr.hasPiece()), (to._coord not in validMoves), (fr._piece._playerType != self._currentPlayer._playerType))
             self.endGame(EndGameType.INVALID_MOVE)
         
 
@@ -106,12 +130,9 @@ class Game:
         fr.removePiece()
 
         if to.hasPiece():
-            to.removePiece(drop=True, player=self._currentPlayer)
+            to.removePiece(captured=True, player=self._currentPlayer)
 
         to.placePiece(frPiece)
-
-        # print(f"{self._currentPlayer} player action: move {fr.name} {to.name}")
-
         '''
         Covers the following cases
         1) When a pawn reaches its promotion zone
@@ -134,8 +155,6 @@ class Game:
         if square.hasPiece():
             self.endGame(EndGameType.INVALID_MOVE)
         
-        dropPiece = self._currentPlayer.dropCapture(pieceName)
-
         pDrop = True
 
         if pieceName == PieceEnum.p.value:
@@ -159,10 +178,68 @@ class Game:
             if square.inPromotionZone(self._currentPlayer):
                 pDrop = False
 
-        if not dropPiece or not pDrop:
+        if not pDrop:
             self.endGame(EndGameType.INVALID_MOVE)
+        else:
+            dropPiece = self._currentPlayer.dropCapture(pieceName)
+
+            if not dropPiece:
+                self.endGame(EndGameType.INVALID_MOVE)
 
         square.placePiece(dropPiece)
+
+    # Sees if newly placed piece has generated a check.
+    # If so, returns the D piece object of the opponent
+    def checkForCheck(self):
+
+        location, dPiece = self._board._driveLocation(self._otherPlayer._playerType)
+        reachablePieces = self._board._reachablePieces(self._currentPlayer._playerType, location)
+
+        # for now, we consider the case where there's only one reachable piece
+        if len(reachablePieces) == 0:
+            return
+
+        doubleCheck = False
+
+        if len(reachablePieces) > 1:
+            doubleCheck = True
+
+        checker = reachablePieces[0]
+        
+        # Next we attempt to find available moves
+        '''
+        3 general options
+        1. escape
+        2. block
+        3. capture the piece
+        '''
+
+        moves = []
+
+        for move in dPiece.getValidMoves(self._boardSquares):
+
+            # Move the king where you're not reachable
+            if len(self._board._reachablePieces(self._currentPlayer._playerType, move, ignoreSide=True)) == 0:
+                moves.append(f"move {coordToString(dPiece._coord)} {coordToString(move)}")
+
+        # For now ignore case where another check is made if piece moves to block
+        blockingPath = self._board._inBetweenPath(dPiece._coord, checker._coord)
+            
+        for path in blockingPath + [checker._coord]:
+            reachablePieces = self._board._reachablePieces(self._otherPlayer._playerType, path)
+
+            for p in reachablePieces:
+                if p._pieceType == PieceEnum.d:
+                    continue
+                
+                moves.append(f"move {coordToString(p._coord)} {coordToString(path)}")
+        
+        if len(moves) == 0:
+            self.endGame(EndGameType.CHECKMATE)
+        else:
+            self._lastLog.append(f"{self._otherPlayer} player is in check!")
+            self._lastLog.append('Available moves:')
+            self._lastLog.append('\n'.join(sorted(moves)))
         
     # parses the input
     def parseInput(self, playerInput: str):
@@ -172,9 +249,9 @@ class Game:
         assert(len(inputSplit) <= 4)
 
         if len(inputSplit) == 4:
-            assert(inputSplit[-1] == 'PROMOTED' and inputSplit[0] == MoveType.MOVE.value)
+            assert(inputSplit[-1] == 'promote' and inputSplit[0] == MoveType.MOVE.value)
             promoted = True
-            inputSplit = inputSplit[:4]
+            inputSplit = inputSplit[:3]
 
         # ensure that there are three commands
         assert(len(inputSplit) == 3 and inputSplit[1] != inputSplit[2])
@@ -200,9 +277,18 @@ class Game:
             self.processDrop(inputSplit[1], dropSquare)
 
         else:
-            print('Invalid Commond')
+            print('Invalid Command')
+            exit(1)
 
+        self._lastLog.append(str(self._board))
+        self._lastLog.append(self._players[1].printCaptures())
+        self._lastLog.append(self._players[0].printCaptures())
+        self._lastLog.append('\n')
 
+        self.checkForCheck()
+
+        # we need to check for potential checks at the end of each turn
+        
 if __name__ == "__main__":
     game = Game()
     

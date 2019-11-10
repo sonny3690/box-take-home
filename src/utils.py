@@ -35,7 +35,7 @@ def convertColCharToNum(colChar: str) -> int:
 
 # given x and y, returns if off coordinate
 def oob(x: int, y: int, boardSize=5)-> bool:
-    return not (1<=x<=boardSize and 1<y<=boardSize)
+    return x <= 0 or x > boardSize or y <=0 or y > boardSize
 
 # coord string to coord
 # returns None if invalid
@@ -45,6 +45,9 @@ def coordStringToCoord(s: str) -> tuple:
 
     return convertColCharToNum(s[0]), int(s[1])
 
+# return coord to string
+def coordToString(t: tuple):
+    return convertColNumToChar(t[0]) + str(t[1])
 
     
 
