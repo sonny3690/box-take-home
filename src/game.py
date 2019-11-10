@@ -2,6 +2,9 @@ from player import Player
 from enum_values import *
 from board import Board
 from utils import *
+from piece import Piece
+import sys
+
 
 class Game:
     def __init__(self):
@@ -22,24 +25,53 @@ class Game:
     def _otherPlayer(self):
         return self._players[(self._num_turns+1) % 2]
 
-    # starts the game
-    def startGame(self):
-        while self._num_turns <= 200 and self._gameState == GameState.PLAYING:
-            print(self._board)
+    def initGame(self, fileInfo):
+        if fileInfo == None:
+            self._board.addInitialPieces()
+        else:
+            self._board.addInitialPieces(fileInfo['initialPieces'])
             
-            commands = ['move e1 e4', 'move e5 e4', 'drop p c4', 'move e4 e3', 'move c4 c5']
+            for pieceVal in fileInfo['upperCaptures']:
+                self._players[1].addCapture(Piece(PieceEnum[pieceVal.lower()], 0, 0, PlayerEnum.UPPER))
+
+            for pieceVal in fileInfo['lowerCaptures']:
+                self._players[0].addCapture(Piece(PieceEnum[pieceVal.lower()], 0, 0, PlayerEnum.LOWER))
+
+
+    # starts the game
+    def startGame(self, fileInfo):
+        
+        fileMode = fileInfo != None
+
+        # print(fileInfo)
+        
+        while self._num_turns < 200 and self._gameState == GameState.PLAYING:
+
+            '''
+            Says should print certain information about the game state
+
+            '''
+            shouldPrint = not fileMode or (self._num_turns == len(fileInfo['moves'])-1)
+            commands = fileInfo['moves'] if fileMode else []
 
             if self._num_turns >= len(commands):
                 playerInput = input(f"{ self._currentPlayer._playerType.value}> ")
             else:
                 playerInput = commands[self._num_turns]
 
+            if shouldPrint:
+                print(f"{self._currentPlayer} action: {playerInput}")
+                print(self._board)
+
+
             #parses the input
             self.parseInput(playerInput)
 
             #prints the captures -> Upper then Lower
-            self._players[1].printCaptures()
-            self._players[0].printCaptures()
+            if shouldPrint:
+                self._players[1].printCaptures()
+                self._players[0].printCaptures()
+                print()
         
             # Do some stuff here
             self._num_turns += 1
@@ -97,10 +129,7 @@ class Game:
         
             frPiece.promotePiece()
                         
-
-        
     def processDrop(self, pieceName: str, square):
-
         # ensure that drop zone is empty
         if square.hasPiece():
             self.endGame(EndGameType.INVALID_MOVE)
@@ -172,10 +201,20 @@ class Game:
 
         else:
             print('Invalid Commond')
-            
+
 
 if __name__ == "__main__":
     game = Game()
     
-    game.startGame()
+    if not (len(sys.argv) == 2 and sys.argv[1] == '-i') and not (len(sys.argv) == 3 and sys.argv[1] == '-f'):
+        print('Please format your argument as: python3 game.py [-i | -f]')
+        exit(1)
+
+    fileInfo = None
+
+    if sys.argv[1] == '-f':
+        fileInfo = parseTestCase(sys.argv[2])
+
+    game.initGame(fileInfo)
+    game.startGame(fileInfo)
     

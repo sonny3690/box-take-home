@@ -14,13 +14,14 @@ Capture seems to be done. Some logics need to be covered nonetheless, including
     1) do this last
 
 4. Promotions
-    a. essentially the same thing, except move changes
-    
-    1)
+    a. essentially the same thing, except move changes *done*
 
 5. Parse test cases & files
     a. Good to do before things start building up
-
+    
+    1. load initial positions
+    2. load captured pieces
+    3. load in moves
 
 6. Extra edge cases
     a. pieces jumping

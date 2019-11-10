@@ -11,9 +11,8 @@ class Player:
         return self._playerType == PlayerEnum.UPPER
 
     def addCapture(self, piece):
-        print('addded', str(piece))
         self._captures.append(piece)
-        print(self._captures)
+
 
     # prints all the captures
     def printCaptures(self):

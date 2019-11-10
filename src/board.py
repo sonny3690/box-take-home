@@ -1,6 +1,7 @@
 import os
 from enum_values import PlayerEnum, PieceEnum
 from square import Square
+from utils import coordStringToCoord
 
 class Board:
     """
@@ -13,13 +14,29 @@ class Board:
 
     def __init__(self):
         self._board = self._initEmptyBoard()
-        self.addInitialPieces()
+        
 
     #adds some pieces, takes None, returns None
-    def addInitialPieces(self) -> None:
-        for piece, dx, dy in Board.INITIAL_ARRANGEMENT:
-            self._board[dx][Board.BOARD_SIZE-1-dy].addPiece(piece, PlayerEnum.UPPER)
-            self._board[Board.BOARD_SIZE-dx-1][dy].addPiece(piece, PlayerEnum.LOWER)
+    def addInitialPieces(self, initialPositions=None) -> None:
+
+        if not initialPositions:
+            for piece, dx, dy in Board.INITIAL_ARRANGEMENT:
+                self._board[dx][Board.BOARD_SIZE-1-dy].addPiece(piece, PlayerEnum.UPPER)
+                self._board[Board.BOARD_SIZE-dx-1][dy].addPiece(piece, PlayerEnum.LOWER)
+        else:
+            # here, the initial arrangements have been set by file
+            for pieceInfo in initialPositions:
+                pos, pieceVal = pieceInfo['position'], pieceInfo['piece']
+
+                x,y = coordStringToCoord(pos)
+                
+                # we know this piece has been promoted initially
+                promoted = len(pieceVal) == 2 and pieceVal[0] == '+'
+                piece = PieceEnum[pieceVal[-1].lower()]
+                player = PlayerEnum.UPPER if pieceVal[-1].isupper() else PlayerEnum.LOWER
+                
+                #subtract by one to account for 0 indexing
+                self._board[x-1][y-1].addPiece(piece, player, promoted=promoted)
 
     # initializes an empty board        
     def _initEmptyBoard(self):
