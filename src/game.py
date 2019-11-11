@@ -12,7 +12,6 @@ class Game:
         self._gameState = GameState.PLAYING
         self._players = [Player(PlayerEnum.LOWER), Player(PlayerEnum.UPPER)]
         self._board = Board()
-
         self._lastLog = []
 
     @property
@@ -32,13 +31,17 @@ class Game:
             self._board.addInitialPieces()
         else:
             self._board.addInitialPieces(fileInfo['initialPieces'])
-            
-            for pieceVal in fileInfo['upperCaptures']:
-                self._players[1].addCapture(Piece(PieceEnum[pieceVal.lower()], 0, 0, PlayerEnum.UPPER))
 
-            for pieceVal in fileInfo['lowerCaptures']:
-                self._players[0].addCapture(Piece(PieceEnum[pieceVal.lower()], 0, 0, PlayerEnum.LOWER))
+            for pieceVal in (fileInfo['upperCaptures'] + fileInfo['lowerCaptures']):
+                
+                playerType = PlayerEnum.UPPER if pieceVal.isupper() else PlayerEnum.LOWER
+                piece = Piece(PieceEnum[pieceVal.lower()], 0, 0, playerType, captured=True)
 
+                # add capture to the parents
+                self._players[0 if playerType == PlayerEnum.LOWER else 1].addCapture(piece)
+
+                # append pices to the board
+                self._board._pieces.append(piece)
 
     # starts the game
     def startGame(self, fileInfo):
@@ -50,14 +53,16 @@ class Game:
             print('Captures UPPER:')
             print('Captures lower:\n')
             
+        commands = fileInfo['moves'] if fileMode else []
+
+        # print(len(commands))
         
-        while self._num_turns < 200 and self._gameState == GameState.PLAYING:
+        while self._num_turns < 400 and self._gameState == GameState.PLAYING:
             '''
             Says should print certain information about the game state
 
             '''
-            commands = fileInfo['moves'] if fileMode else []
-        
+
             if self._num_turns >= len(commands):
 
                 prompt = f"{self._currentPlayer._playerType.value}> "
@@ -81,14 +86,14 @@ class Game:
             
             # Do some stuff here
             self._num_turns += 1
-
+            
             if not fileMode:
                 print('\n'.join(self._lastLog))
          
 
         if fileMode:
             print('\n'.join(self._lastLog)) 
-        print('Tie game. Too many moves.')
+        print('Tie game.  Too many moves.')
     
     # Ends the game and exits the REPL
     def endGame(self, endGameType):
@@ -136,13 +141,21 @@ class Game:
             Means that the game will end for the follopwing cases
             1) outside the promotion zone
             2) box drive or a shield is asked to be promoted
+            3) piece is alreadyw promoted
             '''
 
             promote = True
 
-            if not (fr.inPromotionZone(self._currentPlayer) or to.inPromotionZone(self._currentPlayer)) or (frPiece._pieceType == PieceEnum.d or frPiece._pieceType == PieceEnum.s):
+            if not (fr.inPromotionZone(self._currentPlayer) or to.inPromotionZone(self._currentPlayer)) \
+                or (frPiece._pieceType == PieceEnum.d or frPiece._pieceType == PieceEnum.s)\
+                or frPiece._promoted:
                 self.endGame(EndGameType.INVALID_MOVE)
         
+        '''
+        Here, we account for case in which our drive piece is moving into a check
+        '''
+        if (frPiece._pieceType == PieceEnum.d and self._board._reachablePieces(self._otherPlayer._playerType, to._coord)):
+            self.endGame(EndGameType.INVALID_MOVE)
 
         # we first remove our piece from our original destination then place it
         fr.removePiece()
@@ -164,7 +177,6 @@ class Game:
         pDrop = True
 
         if pieceName == PieceEnum.p.value:
-
             x = square._x -1
             
             for y in range(Board.BOARD_SIZE):
@@ -188,16 +200,18 @@ class Game:
             self.endGame(EndGameType.INVALID_MOVE)
         else:
             dropPiece = self._currentPlayer.dropCapture(pieceName)
-
+    
             if not dropPiece:
                 self.endGame(EndGameType.INVALID_MOVE)
+
+            # set captured flag as false
+            dropPiece._captured = False
 
         square.placePiece(dropPiece)
 
     # Sees if newly placed piece has generated a check.
     # If so, returns the D piece object of the opponent
     def checkForCheck(self):
-
         location, dPiece = self._board._driveLocation(self._otherPlayer._playerType)
         reachablePieces = self._board._reachablePieces(self._currentPlayer._playerType, location)
 
@@ -237,8 +251,14 @@ class Game:
             for p in reachablePieces:
                 if p._pieceType == PieceEnum.d:
                     continue
-                
+            
                 moves.append(f"move {coordToString(p._coord)} {coordToString(path)}")
+
+            for c in self._otherPlayer._captures:
+                
+                # skip when we're implementing on the cheker
+                if not sameCoord(path, checker._coord):
+                    moves.append(f"drop {str(c).lower()} {coordToString(path)}")
         
         if len(moves) == 0:
             self.endGame(EndGameType.CHECKMATE)

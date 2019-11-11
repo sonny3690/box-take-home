@@ -26,14 +26,14 @@ class Piece:
         PieceEnum.p : MOVE[PieceEnum.s]
     }
 
-    def __init__(self, pieceType: str, x: int, y: int, playerType: str):
+    def __init__(self, pieceType: str, x: int, y: int, playerType: str, captured=False):
         self._pieceType = pieceType
         self._moves = Piece.MOVE[pieceType]
         self._promoted = False
         self._playerType = playerType
         self._x = x
         self._y = y
-        self._captured = False
+        self._captured = captured
 
     @property
     def _promotionZone(self):
@@ -100,7 +100,6 @@ class Piece:
     def promotePiece(self):
         self._promoted = True
         self._moves = Piece.PMOVE[self._pieceType]
-
 
     #unpromotes a piece
     def unpromote_piece(self):

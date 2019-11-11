@@ -49,6 +49,10 @@ def coordStringToCoord(s: str) -> tuple:
 def coordToString(t: tuple):
     return convertColNumToChar(t[0]) + str(t[1])
 
+# returns if the same coordinate
+def sameCoord(t1: tuple, t2: tuple) -> bool:
+    return t1[0] == t2[0] and t1[1] == t2[1]
+
     
 
     

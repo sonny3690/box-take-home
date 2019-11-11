@@ -12,12 +12,15 @@ class Square:
         
 
     # adds a piece to the square
-    def addPiece(self, piece: str, playerType, promoted=False)-> None:
+    def addPiece(self, piece: str, playerType, promoted=False, captured=False)-> None:
         self._piece = Piece(piece, self._x, self._y, playerType)
         self._occupied = True
 
         if promoted:
             self._piece.promotePiece()
+        
+        if captured:
+            self._piece._captured = True
 
         return self._piece
 
