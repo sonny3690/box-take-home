@@ -72,10 +72,6 @@ class Board:
 
     # returns if piece can reach a certain coordinate
     def _pieceCanReach(self, piece, coord, ignoreSide=False):
-
-        # print(piece, piece.getValidMoves(self._board))
-        # print(list(filter(lambda x: x._playerType == PlayerEnum.UPPER, self._pieces)))
-
         for c in piece.getValidMoves(self._board, ignoreSide):
 
             if c[0] == coord[0] and c[1] == coord[1]:

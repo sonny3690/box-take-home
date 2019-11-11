@@ -60,9 +60,6 @@ class Piece:
 
             else:
                 directionalMagnitude = 10
-            
-                # if self._pieceType == PieceEnum.s:
-                #     print((nextX, nextY))
 
             # subtract one because our squares are 0 indexed
             relevantSquare = squares[nextX-1][nextY-1]
@@ -75,8 +72,6 @@ class Piece:
 
             # we passed these checks, so we move on 
             valid_moves.append((nextX, nextY))
-
-        # print(self._pieceType, valid_moves)
 
         return valid_moves
 

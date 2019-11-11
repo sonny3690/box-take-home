@@ -54,8 +54,6 @@ class Game:
             print('Captures lower:\n')
             
         commands = fileInfo['moves'] if fileMode else []
-
-        # print(len(commands))
         
         while self._num_turns < 400 and self._gameState == GameState.PLAYING:
             '''
@@ -124,10 +122,6 @@ class Game:
         '''
         if (not fr.hasPiece()) or (to._coord not in validMoves) or (fr._piece._playerType != self._currentPlayer._playerType):
             # small problem here; we're trying to move into each other
-
-            # print(fr._piece, list(map(coordToString, validMoves)))
-
-            # print((not fr.hasPiece()), (to._coord not in validMoves), (fr._piece._playerType != self._currentPlayer._playerType))
             self.endGame(EndGameType.INVALID_MOVE)
 
         '''
