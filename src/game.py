@@ -196,6 +196,22 @@ class Game:
             if square.inPromotionZone(self._currentPlayer):
                 pDrop = False
 
+            # check case in which dropping pawn causes a checkmate
+            dLocation, d = self._board._driveLocation(self._otherPlayer._playerType)
+            pawnDirection = -1 if self._currentPlayer == PlayerEnum.UPPER else 1                
+        
+            # checks if pawn if causing a check
+            if sameCoord(dLocation, (square._x, square._y + pawnDirection)):
+                pDrop = False
+
+                # checks if the king is not allowed to move anywhere prior to pawn placement
+                for move in d.getValidMoves(self._boardSquares):
+                    reachables = self._board._reachablePieces(self._currentPlayer._playerType, move, ignoreSide=True)
+
+                    if len(reachables) == 0:
+                        pDrop = True
+                        break
+            
         if not pDrop:
             self.endGame(EndGameType.INVALID_MOVE)
         else:

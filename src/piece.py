@@ -55,12 +55,7 @@ class Piece:
             nextX = self._x + dx
             nextY = self._y + dy
 
-            # if self._pieceType == PieceEnum.s:
-            #     print('parsed', (nextX, nextY), abs(dx) + abs(dy))
-
             if oob(nextX, nextY) or abs(dx) + abs(dy) > directionalMagnitude:
-                # if self._pieceType == PieceEnum.s:
-                    # print((nextX, nextY), abs(dx) + abs(dy))
                 continue
 
             else:
