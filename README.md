@@ -30,3 +30,17 @@ chmod a+x <file>
 ```
 ./test-runner-mac
 ```
+
+
+### Support Scripts
+
+```./debug```
+
+- runs whatever file format is in `debug.in`
+
+```./compareTests <testName>```
+
+- runs `testcases/<testName>.in` and compares it to `testcases/<testName>.out`.
+
+```./runTest <test>```
+- runs `testcases/<test>.in`
